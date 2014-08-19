@@ -1,41 +1,34 @@
 var Parser = require('..'),
-  fs = require('fs');
+  fs = require('fs'),
+  assert = require('assert');
 
-exports.parser = {
-  'constructor': function (test) {
-    test.expect(1);
+describe('Parser', function () {
+  describe('#()', function () {
+    it('should have default keyword spec when none is passed', function () {
+      assert.ok((new Parser()).keywordSpec.gettext.length > 0);
+    });
+  });
 
-    var parser;
-
-    parser = new Parser();
-    test.ok(parser.keywordSpec.gettext.length > 0, 'Default keyword spec was not set');
-
-    test.done();
-  },
-  'default': function (test) {
-    test.expect(3);
-
+  describe('#parse()', function () {
     var parser = new Parser(),
-      templatePath = __dirname + '/fixtures/template.hbs',
-      template = fs.readFileSync(templatePath, 'utf8'),
+      template,
+      result;
+
+    it('should return results', function () {
+      template = fs.readFileSync(__dirname + '/fixtures/template.hbs', 'utf8'),
       result = parser.parse(template);
 
-    test.equal(typeof result, 'object', 'No object returned');
-    test.equal(Object.keys(result).length, 6, 'Invalid amount of strings returned');
-    test.equal(result['Image description'].line.length, 2, 'Invalid amount of lines returned for string');
+      assert.equal(typeof result, 'object');
+      assert.equal(Object.keys(result).length, 6);
+      assert.equal(result['Image description'].line.length, 2);
+    });
 
-    test.done();
-  },
-  'plural': function (test) {
-    test.expect(1);
-
-    var parser = new Parser(),
-      templatePath = __dirname + '/fixtures/plural.hbs',
-      template = fs.readFileSync(templatePath, 'utf8'),
+    it('should return plural results', function () {
+      template = fs.readFileSync(__dirname + '/fixtures/plural.hbs', 'utf8');
       result = parser.parse(template);
 
-    test.equal(Object.keys(result).length, 2, 'Invalid amount of strings returned');
-
-    test.done();
-  }
-};
+      assert.equal(Object.keys(result).length, 2);
+      assert.equal(result['default'].plural, 'defaults');
+    });
+  });
+});
