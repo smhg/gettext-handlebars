@@ -1,0 +1,5 @@
+/test
+.travis.yml
+.gitignore
+*.sublime-project
+*.sublime-workspace

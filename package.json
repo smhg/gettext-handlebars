@@ -1,0 +1,33 @@
+{
+  "name": "gettext-handlebars",
+  "version": "0.1.0",
+  "description": "Extract translatable strings from Handlebars templates",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smhg/gettext-handlebars.git"
+  },
+  "keywords": [
+    "handlebars",
+    "gettext",
+    "hbs",
+    "i18n",
+    "translate",
+    "translation"
+  ],
+  "author": "Sam Hauglustaine",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smhg/gettext-handlebars/issues"
+  },
+  "homepage": "https://github.com/smhg/gettext-handlebars",
+  "devDependencies": {
+    "mocha": "^1.21.4"
+  }
+}
