@@ -1,7 +1,6 @@
-gettext-handlebars
-==================
+# gettext-handlebars [![build status](https://secure.travis-ci.org/smhg/gettext-handlebars.png)](http://travis-ci.org/smhg/gettext-handlebars)
 
-Extract translatable strings from Handlebars templates.
+Extract translatable strings from Handlebars template strings.
 
 ## Example use
 ```javascript
@@ -23,3 +22,6 @@ var msgs = parser.parse(template);
  * }
  */
 ```
+
+## CLI use
+The parser is integrated into [gmarty/gettext](https://github.com/gmarty/xgettext) for use on the command line.
