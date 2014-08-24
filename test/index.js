@@ -40,5 +40,28 @@ describe('Parser', function () {
                 done();
               });
           });
+
+        it('should recognize subexpressions', function (done) {
+            fs.readFile(__dirname + '/fixtures/subexpression.hbs', {encoding: 'utf8'}, function (err, data) {
+                if (err) {
+                  throw err;
+                }
+
+                var result = (new Parser()).parse(data);
+
+                assert('subexpression' in result);
+                assert('%s subexpression' in result);
+                assert.equal(result['%s subexpression'].plural, '%s subexpressions');
+                assert('%s %s subexpression' in result);
+                assert.equal(result['%s %s subexpression'].plural, '%s %s subexpressions');
+                assert('second' in result);
+                assert('regular' in result);
+                assert('%s %s other' in result);
+                assert('nested %s' in result);
+                assert.equal(7, Object.keys(result).length);
+
+                done();
+              });
+          });
       });
   });

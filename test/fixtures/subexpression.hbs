@@ -1,0 +1,7 @@
+{{outer (gettext "subexpression")}}
+{{sprintf (ngettext "%s subexpression" "%s subexpressions" count) count}}
+{{sprintf (ngettext "%s %s subexpression" "%s %s subexpressions" count) (gettext "second") count}}
+{{gettext "regular" (ingore this helper)}}
+{{sprintf (ngettext "%s %s other" "%s %s others" count) (sprintf (gettext "nested %s")) something}}
+{{sprintf "%s something" (inner "something else")}}
+{{gettext}}

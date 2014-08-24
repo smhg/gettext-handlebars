@@ -1,37 +1,22 @@
-var newline = /\r?\n|\r/g,
-  escapeRegExp = function (string) {
-      // source: https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
-      return string.replace(/([.*+?^${}()|\[\]\/\\])/g, "\\$1");
-    },
-  trimQuotes = function (str) {
-      return str.replace(/^['"]/g, '').replace(/['"]$/g, '');
-    },
-  paramPattern = new RegExp('([\'"][^\'"]*[\'"]|[^\'" ]+)', 'g');
+var Handlebars = require('handlebars');
 
 /**
  * Constructor
  * @param Object keywordSpec An object with keywords as keys and parameter indexes as values
  */
 function Parser (keywordSpec) {
-  keywordSpec = keywordSpec || {
-      _: [0],
-      gettext: [0],
-      ngettext: [0, 1]
-    };
+    keywordSpec = keywordSpec || {
+        _: [0],
+        gettext: [0],
+        ngettext: [0, 1]
+      };
 
-  if (typeof keywordSpec !== 'object') {
-    throw 'Invalid keyword spec';
+    if (typeof keywordSpec !== 'object') {
+      throw 'Invalid keyword spec';
+    }
+
+    this.keywordSpec = keywordSpec;
   }
-
-  this.keywordSpec = keywordSpec;
-
-  this.expressionPattern = new RegExp([
-    '\\{\\{ *',
-    '(' + Object.keys(this.keywordSpec).map(escapeRegExp).join('|') + ')',
-    ' ([^\\}\\}]*)',
-    ' *\\}\\}'
-    ].join(''), 'g');
-}
 
 /**
  * Given a Handlebars template string returns the list of i18n strings.
@@ -40,27 +25,35 @@ function Parser (keywordSpec) {
  * @return Object The list of translatable strings, the line(s) on which each appears and an optional plural form.
  */
 Parser.prototype.parse = function (template) {
-  var result = {},
-    match,
-    keyword,
-    params,
-    msgid;
+    var keywordSpec = this.keywordSpec,
+      keywords = Object.keys(keywordSpec),
+      tree = Handlebars.parse(template);
 
-  while ((match = this.expressionPattern.exec(template)) !== null) {
-    keyword = match[1];
-    params = match[2].match(paramPattern).map(trimQuotes);
+    var isMsg = function (msgs, statement) {
+        statement = statement.sexpr || statement;
 
-    msgid = params[this.keywordSpec[keyword][0]];
+        if (statement.type && statement.type === 'sexpr') {
+          if (keywords.indexOf(statement.id.string) >= 0) {
+            var idx = keywordSpec[statement.id.string],
+              param = statement.params[idx[0]];
 
-    result[msgid] = result[msgid] || {line: []};
-    result[msgid].line.push(template.substr(0, match.index).split(newline).length);
+            if (param && param.type === 'STRING') {
+              msgs[param.string] = msgs[param.string] || {line: []};
+              msgs[param.string].line.push(param.firstLine);
+            }
 
-    if (this.keywordSpec[keyword].length > 1) {
-      result[msgid].plural = result[msgid].plural || params[this.keywordSpec[keyword][1]];
-    }
-  }
+            if (idx[1] && statement.params[idx[1]]) {
+              msgs[param.string].plural = msgs[param.string].plural || statement.params[idx[1]].string;
+            }
+          }
 
-  return result;
-};
+          statement.params.reduce(isMsg, msgs);
+        }
+
+        return msgs;
+      };
+
+    return tree.statements.reduce(isMsg, {});
+  };
 
 module.exports = Parser;
