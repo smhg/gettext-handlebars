@@ -52,7 +52,13 @@ Parser.prototype.parse = function (template) {
 
             break;
           case 'block':
-            statement.program.statements.reduce(isMsg, msgs);
+            if (statement.program) {
+              statement.program.statements.reduce(isMsg, msgs);
+            }
+
+            if (statement.inverse) {
+              statement.inverse.statements.reduce(isMsg, msgs);
+            }
 
             break;
         }

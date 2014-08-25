@@ -20,7 +20,8 @@ describe('Parser', function () {
 
                 assert.equal(typeof result, 'object');
                 assert('inside block' in result);
-                assert.equal(Object.keys(result).length, 7);
+                assert('inside block inverse' in result);
+                assert.equal(Object.keys(result).length, 8);
                 assert.equal(result['Image description'].line.length, 2);
 
                 done();
