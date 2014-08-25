@@ -32,22 +32,29 @@ Parser.prototype.parse = function (template) {
     var isMsg = function (msgs, statement) {
         statement = statement.sexpr || statement;
 
-        if (statement.type && statement.type === 'sexpr') {
-          if (keywords.indexOf(statement.id.string) >= 0) {
-            var idx = keywordSpec[statement.id.string],
-              param = statement.params[idx[0]];
+        switch (statement.type) {
+          case 'sexpr':
+            if (keywords.indexOf(statement.id.string) >= 0) {
+              var idx = keywordSpec[statement.id.string],
+                param = statement.params[idx[0]];
 
-            if (param && param.type === 'STRING') {
-              msgs[param.string] = msgs[param.string] || {line: []};
-              msgs[param.string].line.push(param.firstLine);
+              if (param && param.type === 'STRING') {
+                msgs[param.string] = msgs[param.string] || {line: []};
+                msgs[param.string].line.push(param.firstLine);
+              }
+
+              if (idx[1] && statement.params[idx[1]]) {
+                msgs[param.string].plural = msgs[param.string].plural || statement.params[idx[1]].string;
+              }
             }
 
-            if (idx[1] && statement.params[idx[1]]) {
-              msgs[param.string].plural = msgs[param.string].plural || statement.params[idx[1]].string;
-            }
-          }
+            statement.params.reduce(isMsg, msgs);
 
-          statement.params.reduce(isMsg, msgs);
+            break;
+          case 'block':
+            statement.program.statements.reduce(isMsg, msgs);
+
+            break;
         }
 
         return msgs;

@@ -19,7 +19,8 @@ describe('Parser', function () {
                 var result = (new Parser()).parse(data);
 
                 assert.equal(typeof result, 'object');
-                assert.equal(Object.keys(result).length, 6);
+                assert('inside block' in result);
+                assert.equal(Object.keys(result).length, 7);
                 assert.equal(result['Image description'].line.length, 2);
 
                 done();
