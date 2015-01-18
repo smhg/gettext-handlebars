@@ -1,6 +1,6 @@
 # gettext-handlebars [![build status](https://secure.travis-ci.org/smhg/gettext-handlebars.png)](http://travis-ci.org/smhg/gettext-handlebars)
 
-Extract translatable strings from Handlebars template strings.
+Extract translatable strings from [Handlebars](http://handlebarsjs.com/) template strings.
 
 It can be used stand-alone or through [gmarty/gettext](https://github.com/gmarty/xgettext).
 
