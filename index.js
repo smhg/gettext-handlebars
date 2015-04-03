@@ -2,23 +2,69 @@
 
 var Handlebars = require('handlebars');
 
-/**
- * Constructor
- * @param Object keywordSpec An object with keywords as keys and parameter indexes as values
- */
 function Parser (keywordSpec) {
-    keywordSpec = keywordSpec || {
-        _: [0],
-        gettext: [0],
-        ngettext: [0, 1]
-      };
+  var gettextSpec = ['msgid'];
+  var ngettextSpec = ['msgid', 'msgid_plural'];
+  var pgettextSpec = ['msgctxt', 'msgid'];
+  var npgettextSpec = ['msgctxt', 'msgid', 'msgid_plural'];
 
-    if (typeof keywordSpec !== 'object') {
-      throw 'Invalid keyword spec';
+  keywordSpec = keywordSpec || {
+    gettext: gettextSpec,
+    _: gettextSpec,
+
+    ngettext: ngettextSpec,
+    n_: ngettextSpec,
+
+    pgettext: pgettextSpec,
+    p_: pgettextSpec,
+
+    npgettext: npgettextSpec,
+    np_: npgettextSpec
+  };
+
+  // maintain backwards compatibility with `_: [0]` format
+  keywordSpec = Object.keys(keywordSpec).reduce(function (spec, keyword) {
+    spec[keyword] = keywordSpec[keyword].reduce(function (a, param, index) {
+      if (typeof param === 'number') {
+        if (param > a.length) {
+          // grow array
+          for (var i = 0; i < param - a.length; i++) {
+            a.push('ignored' + i);
+          }
+        }
+
+        if (index === 0) {
+          a[param] = 'msgid';
+        } else if (index === 1) {
+          a[param] = 'msgid_plural';
+        } else {
+          throw new Error('Too many integers passed for keyword ' + keyword);
+        }
+      } else {
+        a.push(param);
+      }
+
+      return a;
+    }, []);
+
+    return spec;
+  }, {});
+
+  Object.keys(keywordSpec).forEach(function (keyword) {
+    if (keywordSpec[keyword].indexOf('msgid') === -1) {
+      throw new Error('Every keyword must have a msgid parameter, but "' + keyword + '" doesn\'t have one');
     }
+  });
 
-    this.keywordSpec = keywordSpec;
-  }
+  this.keywordSpec = keywordSpec;
+}
+
+// Same as what Jed.js uses
+Parser.contextDelimiter = String.fromCharCode(4);
+
+Parser.messageToKey = function (msgid, msgctxt) {
+  return msgctxt ? msgctxt + Parser.contextDelimiter + msgid : msgid;
+};
 
 /**
  * Given a Handlebars template string returns the list of i18n strings.
@@ -36,17 +82,63 @@ Parser.prototype.parse = function (template) {
 
         switch (statement.type) {
           case 'sexpr':
-            if (keywords.indexOf(statement.id.string) >= 0) {
-              var idx = keywordSpec[statement.id.string],
-                param = statement.params[idx[0]];
+            if (keywords.indexOf(statement.id.string) !== -1) {
+              var spec = keywordSpec[statement.id.string],
+                params = statement.params,
+                msgidParam = params[spec.indexOf('msgid')];
 
-              if (param && param.type === 'STRING') {
-                msgs[param.string] = msgs[param.string] || {line: []};
-                msgs[param.string].line.push(param.firstLine);
-              }
+              if (msgidParam) { // don't extract {{gettext}} without param
+                var msgid = msgidParam.string,
+                  contextIndex = spec.indexOf('msgctxt');
 
-              if (idx[1] && statement.params[idx[1]]) {
-                msgs[param.string].plural = msgs[param.string].plural || statement.params[idx[1]].string;
+                var context = null; // null context is *not* the same as empty context
+                if (contextIndex >= 0) {
+                  var contextParam = params[contextIndex];
+                  if (!contextParam) {
+                    // throw an error if there's supposed to be a context but not enough
+                    // parameters were passed to the handlebars helper
+                    throw new Error('No context specified for msgid "' + msgid + '"');
+                  }
+                  if (contextParam.type !== 'STRING') {
+                    throw new Error('Context must be a string literal for msgid "' + msgid + '"');
+                  }
+
+                  context = contextParam.string;
+                }
+
+                var key = Parser.messageToKey(msgid, context);
+                msgs[key] = msgs[key] || {line: []};
+
+                // make sure plural forms match
+                var pluralIndex = spec.indexOf('msgid_plural');
+                if (pluralIndex !== -1) {
+                  var pluralParam = params[pluralIndex];
+                  if (!pluralParam) {
+                    throw new Error('No plural specified for msgid "' + msgid + '"');
+                  }
+                  if (pluralParam.type !== 'STRING') {
+                    throw new Error('Plural must be a string literal for msgid ' + msgid);
+                  }
+
+                  var plural = pluralParam.string;
+                  var existingPlural = msgs[key].msgid_plural;
+                  if (plural && existingPlural && existingPlural !== plural) {
+                    throw new Error('Incompatible plural definitions for msgid "' + msgid +
+                      '" ("' + msgs[key].msgid_plural + '" and "' + plural + '")');
+                  }
+                }
+
+                msgs[key].line.push(statement.firstLine);
+
+                spec.forEach(function(prop, i) {
+                  var param = params[i];
+                  if (param && param.type === 'STRING') {
+                    msgs[key][prop] = params[i].string;
+                  }
+                });
+
+                // maintain backwards compatibility with plural output
+                msgs[key].plural = msgs[key].msgid_plural;
               }
             }
 
