@@ -1,3 +1,5 @@
+'use strict';
+
 var Parser = require('..'),
   fs = require('fs'),
   assert = require('assert');
