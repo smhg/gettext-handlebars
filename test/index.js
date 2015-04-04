@@ -144,4 +144,19 @@ describe('Parser', function () {
           done();
         });
       });
+
+      it('should support being called without `new`', function (done) {
+        /* jshint newcap: false */
+        fs.readFile(__dirname + '/fixtures/template.hbs', {encoding: 'utf8'}, function (err, data) {
+          if (err) {
+            throw err;
+          }
+
+          var result = Parser().parse(data);
+
+          assert('inside block' in result);
+
+          done();
+        });
+      });
   });

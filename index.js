@@ -3,6 +3,11 @@
 var Handlebars = require('handlebars');
 
 function Parser (keywordSpec) {
+  // make new optional
+  if (!(this instanceof Parser)) {
+    return new Parser(keywordSpec);
+  }
+
   var gettextSpec = ['msgid'];
   var ngettextSpec = ['msgid', 'msgid_plural'];
   var pgettextSpec = ['msgctxt', 'msgid'];
