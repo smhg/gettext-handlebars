@@ -60,6 +60,18 @@ describe('Parser', function () {
               });
           });
 
+        it('should throw an error if there are mismatched plurals', function (done) {
+          fs.readFile(__dirname + '/fixtures/mismatched-plurals.hbs', {encoding: 'utf8'}, function (err, data) {
+            if (err) {
+              throw err;
+            }
+
+            assert.throws(function() { new Parser().parse(data); }, Error);
+
+            done();
+          });
+        });
+
         it('should recognize subexpressions', function (done) {
             fs.readFile(__dirname + '/fixtures/subexpression.hbs', {encoding: 'utf8'}, function (err, data) {
                 if (err) {
