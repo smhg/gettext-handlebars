@@ -11,13 +11,5 @@
   "unused": true,
   "boss": true,
   "eqnull": true,
-  "strict": true,
-  "globals": {
-    "describe": false,
-    "it": false,
-    "before": false,
-    "beforeEach": false,
-    "after": false,
-    "afterEach": false
-  }
+  "strict": true
 }
