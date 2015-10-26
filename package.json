@@ -28,8 +28,8 @@
   },
   "homepage": "https://github.com/smhg/gettext-handlebars",
   "devDependencies": {
-    "jshint": "^2.6.3",
-    "mocha": "^2.2.1"
+    "jshint": "^2.8.0",
+    "mocha": "^2.3.3"
   },
   "dependencies": {
     "handlebars": "^2.0.0"
