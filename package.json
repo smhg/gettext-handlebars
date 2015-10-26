@@ -7,7 +7,10 @@
     "test": "test"
   },
   "scripts": {
-    "test": "eslint index.js test/index.js && mocha"
+    "lint": "eslint index.js test",
+    "test": "mocha",
+    "preversion": "npm run lint && npm test",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
