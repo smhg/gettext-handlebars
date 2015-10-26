@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jshint index.js test/index.js && mocha"
+    "test": "eslint index.js test/index.js && mocha"
   },
   "repository": {
     "type": "git",
@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/smhg/gettext-handlebars",
   "devDependencies": {
-    "jshint": "^2.8.0",
+    "eslint": "^1.7.3",
     "mocha": "^2.3.3"
   },
   "dependencies": {
