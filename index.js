@@ -83,32 +83,34 @@ Parser.prototype.parse = function (template) {
     tree = Handlebars.parse(template);
 
   var isMsg = function (msgs, statement) {
-    statement = statement.sexpr || statement;
-
     switch (statement.type) {
-    case 'sexpr':
-      if (keywords.indexOf(statement.id.string) !== -1) {
-        var spec = keywordSpec[statement.id.string],
+    case 'MustacheStatement':
+    case 'SubExpression':
+      if (keywords.indexOf(statement.path.original) !== -1) {
+        var spec = keywordSpec[statement.path.original],
           params = statement.params,
           msgidParam = params[spec.indexOf('msgid')];
 
         if (msgidParam) { // don't extract {{gettext}} without param
-          var msgid = msgidParam.string,
+          var msgid = msgidParam.original,
             contextIndex = spec.indexOf('msgctxt');
 
           var context = null; // null context is *not* the same as empty context
+
           if (contextIndex >= 0) {
             var contextParam = params[contextIndex];
+
             if (!contextParam) {
               // throw an error if there's supposed to be a context but not enough
               // parameters were passed to the handlebars helper
               throw new Error('No context specified for msgid "' + msgid + '"');
             }
-            if (contextParam.type !== 'STRING') {
+
+            if (contextParam.type !== 'StringLiteral') {
               throw new Error('Context must be a string literal for msgid "' + msgid + '"');
             }
 
-            context = contextParam.string;
+            context = contextParam.original;
           }
 
           var key = Parser.messageToKey(msgid, context);
@@ -118,14 +120,16 @@ Parser.prototype.parse = function (template) {
           var pluralIndex = spec.indexOf('msgid_plural');
           if (pluralIndex !== -1) {
             var pluralParam = params[pluralIndex];
+
             if (!pluralParam) {
               throw new Error('No plural specified for msgid "' + msgid + '"');
             }
-            if (pluralParam.type !== 'STRING') {
+
+            if (pluralParam.type !== 'StringLiteral') {
               throw new Error('Plural must be a string literal for msgid ' + msgid);
             }
 
-            var plural = pluralParam.string;
+            var plural = pluralParam.original;
             var existingPlural = msgs[key].msgid_plural;
             if (plural && existingPlural && existingPlural !== plural) {
               throw new Error('Incompatible plural definitions for msgid "' + msgid +
@@ -133,12 +137,13 @@ Parser.prototype.parse = function (template) {
             }
           }
 
-          msgs[key].line.push(statement.firstLine);
+          msgs[key].line.push(statement.loc.start.line);
 
           spec.forEach(function(prop, i) {
             var param = params[i];
-            if (param && param.type === 'STRING') {
-              msgs[key][prop] = params[i].string;
+
+            if (param && param.type === 'StringLiteral') {
+              msgs[key][prop] = params[i].original;
             }
           });
 
@@ -147,16 +152,17 @@ Parser.prototype.parse = function (template) {
         }
       }
 
+      // step into possible subexpressions
       statement.params.reduce(isMsg, msgs);
 
       break;
-    case 'block':
+    case 'BlockStatement':
       if (statement.program) {
-        statement.program.statements.reduce(isMsg, msgs);
+        statement.program.body.reduce(isMsg, msgs);
       }
 
       if (statement.inverse) {
-        statement.inverse.statements.reduce(isMsg, msgs);
+        statement.inverse.body.reduce(isMsg, msgs);
       }
 
       break;
@@ -165,7 +171,7 @@ Parser.prototype.parse = function (template) {
     return msgs;
   };
 
-  return tree.statements.reduce(isMsg, {});
+  return tree.body.reduce(isMsg, {});
 };
 
 module.exports = Parser;
