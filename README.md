@@ -45,3 +45,17 @@ It returns an object with this structure:
   }
 }
 ```
+
+### Development
+
+#### Install
+```shell
+git clone git@github.com:smhg/gettext-handlebars.git
+npm i
+```
+
+#### Test
+```shell
+npm run lint
+npm test
+```
