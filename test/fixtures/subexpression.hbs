@@ -5,3 +5,5 @@
 {{sprintf (ngettext "%s %s other" "%s %s others" count) (sprintf (gettext "nested %s")) something}}
 {{sprintf "%s something" (inner "something else")}}
 {{gettext}}
+{{outer "regular" dummy_hash=(gettext "dummy_hash_text")}}
+{{outer dummy_hash=(gettext "dummy_hash_text_only")}}

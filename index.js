@@ -154,6 +154,11 @@ Parser.prototype.parse = function (template) {
 
       // step into possible subexpressions
       statement.params.reduce(isMsg, msgs);
+      if (statement.hash) {
+        for (var i = 0; i < statement.hash.pairs.length; i++) {
+          isMsg(msgs, statement.hash.pairs[i].value);
+        }
+      }
 
       break;
     case 'BlockStatement':

@@ -89,7 +89,9 @@ describe('Parser', function () {
         assert('regular' in result);
         assert('%s %s other' in result);
         assert('nested %s' in result);
-        assert.equal(7, Object.keys(result).length);
+        assert('dummy_hash_text' in result);
+        assert('dummy_hash_text_only' in result);
+        assert.equal(9, Object.keys(result).length);
 
         done();
       });
