@@ -166,7 +166,7 @@ Parser.prototype.parse = function (template) {
     }
 
     // subexpressions as params
-    if (statement.params ) {
+    if (statement.params) {
       statement.params.reduce(isMsg, msgs);
     }
 
