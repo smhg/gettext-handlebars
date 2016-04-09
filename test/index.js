@@ -91,7 +91,8 @@ describe('Parser', function () {
         assert('nested %s' in result);
         assert('dummy_hash_text' in result);
         assert('dummy_hash_text_only' in result);
-        assert.equal(9, Object.keys(result).length);
+        assert('subexpression_from_from_partial' in result);
+        assert.equal(10, Object.keys(result).length);
 
         done();
       });

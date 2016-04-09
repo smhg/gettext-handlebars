@@ -171,6 +171,17 @@ Parser.prototype.parse = function (template) {
       }
 
       break;
+
+    case 'PartialStatement':
+      if (statement.hash && statement.hash.pairs) {
+        for (var j = 0; j < statement.hash.pairs.length; j++) {
+          if (statement.hash.pairs[j].value && statement.hash.pairs[j].value.type === 'SubExpression') {
+            isMsg(msgs, statement.hash.pairs[j].value);
+          }
+        }
+      }
+
+      break;
     }
 
     return msgs;
