@@ -152,14 +152,6 @@ Parser.prototype.parse = function (template) {
         }
       }
 
-      // step into possible subexpressions
-      statement.params.reduce(isMsg, msgs);
-      if (statement.hash) {
-        for (var i = 0; i < statement.hash.pairs.length; i++) {
-          isMsg(msgs, statement.hash.pairs[i].value);
-        }
-      }
-
       break;
     case 'BlockStatement':
       if (statement.program) {
@@ -171,21 +163,23 @@ Parser.prototype.parse = function (template) {
       }
 
       break;
+    }
 
-    case 'PartialStatement':
-      if (statement.hash && statement.hash.pairs) {
-        for (var j = 0; j < statement.hash.pairs.length; j++) {
-          if (statement.hash.pairs[j].value && statement.hash.pairs[j].value.type === 'SubExpression') {
-            isMsg(msgs, statement.hash.pairs[j].value);
-          }
-        }
-      }
+    // subexpressions as params
+    if (statement.params ) {
+      statement.params.reduce(isMsg, msgs);
+    }
 
-      break;
+    // subexpressions as hash
+    if (statement.hash) {
+      statement.hash.pairs.reduce(function (msgs, pair) {
+        return isMsg(msgs, pair.value);
+      }, msgs);
     }
 
     return msgs;
   };
+
 
   return tree.body.reduce(isMsg, {});
 };
