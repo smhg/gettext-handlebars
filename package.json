@@ -1,6 +1,6 @@
 {
   "name": "gettext-handlebars",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Extract translatable strings from Handlebars templates",
   "main": "index.js",
   "directories": {
