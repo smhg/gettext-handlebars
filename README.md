@@ -2,7 +2,7 @@
 
 Extract translatable strings from [Handlebars](http://handlebarsjs.com/) template strings.
 
-It can be used stand-alone or through [gmarty/gettext](https://github.com/gmarty/xgettext).
+It can be used stand-alone or through [xgettext-template](https://github.com/gmarty/xgettext).
 
 ### API
 
