@@ -11,22 +11,38 @@ Creates a new parser.
 The `keywordspec` parameter is optional, with the default being:
 ```javascript
 {
-  gettext: ['msgid'],
-  _: ['msgid'],
-
-  ngettext: ['msgid', 'msgid_plural'],
-  n_: ['msgid', 'msgid_plural'],
-
-  pgettext: ['msgctxt', 'msgid'],
-  p_: ['msgctxt', 'msgid'],
-
-  npgettext: ['msgctxt', 'msgid', 'msgid_plural'],
-  np_: ['msgctxt', 'msgid', 'msgid_plural']
+  _: {
+    msgid: 0
+  },
+  gettext: {
+    msgid: 0
+  },
+  dgettext: {
+    msgid: 1
+  },
+  dcgettext: {
+    msgid: 1
+  },
+  ngettext: {
+    msgid: 0,
+    msgid_plural: 1
+  },
+  dngettext: {
+    msgid: 1,
+    msgid_plural: 2
+  },
+  pgettext: {
+    msgctxt: 0,
+    msgid: 1
+  },
+  dpgettext: {
+    msgctxt: 1,
+    msgid: 2
+  }
 }
 ```
-Each keyword (key) requires array of strings indicating the order of expected PO fields.
-For example `npgettext: ['msgctxt', 'msgid', 'msgid_plural']` indicates that the
-`npgettext` handlebars helper takes arguments of form `{{npgettext "context" "string" "plural" ...}}`
+Each keyword (key) requires an object with argument positions. The `msgid` position is required. `msgid_plural` and `msgctxt` are optional.
+For example `gettext: {msgid: 0}` indicates that the Handlebars expression looks like `{{gettext "string"}}`.
 
 #### .parse(template)
 Parses the `template` string for Handlebars expressions using the keywordspec.

@@ -7,22 +7,27 @@ var Parser = require('..'),
 describe('Parser', function () {
   describe('#()', function () {
     it('should have default keyword spec when none is passed', function () {
-      assert((new Parser()).keywordSpec.gettext.length > 0);
+      assert(Object.keys((new Parser()).keywordSpec.gettext).length > 0);
     });
 
-    it('should convert int params to strings', function () {
-      assert.deepEqual((new Parser({_: [0]})).keywordSpec, {_: ['msgid']});
-      assert.deepEqual((new Parser({n_: [0, 1]})).keywordSpec, {n_: ['msgid', 'msgid_plural']});
+    it('should convert old spec formats', function () {
+      assert.deepEqual((new Parser({_: [0]})).keywordSpec, {_: {msgid: 0}});
+      assert.deepEqual((new Parser({n_: [0, 1]})).keywordSpec, {n_: {msgid: 0, msgid_plural: 1}});
 
       var spec = new Parser({n_: [2, 1]}).keywordSpec.n_;
-      assert.equal(spec.length, 3);
-      assert.equal(spec[1], 'msgid_plural');
-      assert.equal(spec[2], 'msgid');
+      assert.equal(Object.keys(spec).length, 2);
+      assert.equal(spec.msgid_plural, 1);
+      assert.equal(spec.msgid, 2);
 
       spec = new Parser({n_: [1, 2]}).keywordSpec.n_;
-      assert.equal(spec.length, 3);
-      assert.equal(spec[1], 'msgid');
-      assert.equal(spec[2], 'msgid_plural');
+      assert.equal(Object.keys(spec).length, 2);
+      assert.equal(spec.msgid, 1);
+      assert.equal(spec.msgid_plural, 2);
+
+      spec = new Parser({ngettext: ['msgid', 'msgid_plural']}).keywordSpec.ngettext;
+      assert.equal(Object.keys(spec).length, 2);
+      assert.equal(spec.msgid, 0);
+      assert.equal(spec.msgid_plural, 1);
     });
   });
 
@@ -120,25 +125,35 @@ describe('Parser', function () {
         throw err;
       }
 
-      var result = (new Parser()).parse(data);
+      var result = (new Parser({
+        pgettext: {
+          msgctxt: 0,
+          msgid: 1
+        },
+        npgettext: {
+          msgctxt: 0,
+          msgid: 1,
+          msgid_plural: 2
+        }
+      })).parse(data);
 
-      var key = Parser.messageToKey('pgettext_msgid', 'pgettext context');
+      var key = Parser.messageToKey('msgid', 'first context');
       assert(key in result);
-      assert.equal(result[key].msgctxt, 'pgettext context');
+      assert.equal(result[key].msgctxt, 'first context');
 
-      key = Parser.messageToKey('p_msgid', 'p_ context');
+      key = Parser.messageToKey('msgid', 'second context');
       assert(key in result);
-      assert.equal(result[key].msgctxt, 'p_ context');
+      assert.equal(result[key].msgctxt, 'second context');
 
-      key = Parser.messageToKey('file', 'noun');
+      key = Parser.messageToKey('file', 'first context');
       assert(key in result);
-      assert.equal(result[key].msgctxt, 'noun');
+      assert.equal(result[key].msgctxt, 'first context');
       assert.equal(result[key].msgid_plural, 'files');
       assert.equal(result[key].plural, 'files');
 
-      key = Parser.messageToKey('file', 'verb');
+      key = Parser.messageToKey('file', 'second context');
       assert(key in result);
-      assert.equal(result[key].msgctxt, 'verb');
+      assert.equal(result[key].msgctxt, 'second context');
       assert.equal(result[key].msgid_plural, 'files');
       assert.equal(result[key].plural, 'files');
 

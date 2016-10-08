@@ -8,56 +8,66 @@ function Parser (keywordSpec) {
     return new Parser(keywordSpec);
   }
 
-  var gettextSpec = ['msgid'];
-  var ngettextSpec = ['msgid', 'msgid_plural'];
-  var pgettextSpec = ['msgctxt', 'msgid'];
-  var npgettextSpec = ['msgctxt', 'msgid', 'msgid_plural'];
-
+  // default JavaScript keywords from
+  // https://www.gnu.org/savannah-checkouts/gnu/gettext/manual/html_node/xgettext-Invocation.html
   keywordSpec = keywordSpec || {
-    gettext: gettextSpec,
-    _: gettextSpec,
-
-    ngettext: ngettextSpec,
-    n_: ngettextSpec,
-
-    pgettext: pgettextSpec,
-    p_: pgettextSpec,
-
-    npgettext: npgettextSpec,
-    np_: npgettextSpec
+    _: {
+      msgid: 0
+    },
+    gettext: {
+      msgid: 0
+    },
+    dgettext: {
+      msgid: 1
+    },
+    dcgettext: {
+      msgid: 1
+    },
+    ngettext: {
+      msgid: 0,
+      msgid_plural: 1
+    },
+    dngettext: {
+      msgid: 1,
+      msgid_plural: 2
+    },
+    pgettext: {
+      msgctxt: 0,
+      msgid: 1
+    },
+    dpgettext: {
+      msgctxt: 1,
+      msgid: 2
+    }
   };
 
-  // maintain backwards compatibility with `_: [0]` format
-  keywordSpec = Object.keys(keywordSpec).reduce(function (spec, keyword) {
-    spec[keyword] = keywordSpec[keyword].reduce(function (a, param, index) {
-      if (typeof param === 'number') {
-        if (param > a.length) {
-          // grow array
-          for (var i = 0; i < param - a.length; i++) {
-            a.push('ignored' + i);
-          }
-        }
+  Object.keys(keywordSpec).forEach(function (keyword) {
+    var positions = keywordSpec[keyword];
 
-        if (index === 0) {
-          a[param] = 'msgid';
-        } else if (index === 1) {
-          a[param] = 'msgid_plural';
-        } else {
-          throw new Error('Too many integers passed for keyword ' + keyword);
-        }
-      } else {
-        a.push(param);
-      }
+    if ('msgid' in positions) {
+      return;
+    } else if (Array.isArray(positions) && positions.indexOf('msgid') >= 0) {
+      // maintain backwards compatibility with `_: ['msgid']` format
+      keywordSpec[keyword] = positions.reduce(function (result, key, idx) {
+        result[key] = idx;
 
-      return a;
-    }, []);
+        return result;
+      }, {});
+    } else if (Array.isArray(positions) && positions.length > 0) {
+      // maintain backwards compatibility with `_: [0]` format
+      var order = ['msgid', 'msgid_plural'];
 
-    return spec;
-  }, {});
+      keywordSpec[keyword] = positions.slice(0).reduce(function (result, pos, idx) {
+        result[order[idx]] = pos;
+
+        return result;
+      }, {});
+    }
+  });
 
   Object.keys(keywordSpec).forEach(function (keyword) {
-    if (keywordSpec[keyword].indexOf('msgid') === -1) {
-      throw new Error('Every keyword must have a msgid parameter, but "' + keyword + '" doesn\'t have one');
+    if (!('msgid' in keywordSpec[keyword])) {
+      throw new Error('Every keyword must have a msgid key, but "' + keyword + '" doesn\'t have one');
     }
   });
 
@@ -87,17 +97,16 @@ Parser.prototype.parse = function (template) {
     case 'MustacheStatement':
     case 'SubExpression':
       if (keywords.indexOf(statement.path.original) !== -1) {
-        var spec = keywordSpec[statement.path.original],
-          params = statement.params,
-          msgidParam = params[spec.indexOf('msgid')];
+        var spec = keywordSpec[statement.path.original];
+        var params = statement.params;
+        var msgidParam = params[spec.msgid];
 
         if (msgidParam) { // don't extract {{gettext}} without param
-          var msgid = msgidParam.original,
-            contextIndex = spec.indexOf('msgctxt');
-
+          var msgid = msgidParam.original;
+          var contextIndex = spec.msgctxt;
           var context = null; // null context is *not* the same as empty context
 
-          if (contextIndex >= 0) {
+          if (contextIndex !== undefined) {
             var contextParam = params[contextIndex];
 
             if (!contextParam) {
@@ -117,8 +126,8 @@ Parser.prototype.parse = function (template) {
           msgs[key] = msgs[key] || {line: []};
 
           // make sure plural forms match
-          var pluralIndex = spec.indexOf('msgid_plural');
-          if (pluralIndex !== -1) {
+          var pluralIndex = spec.msgid_plural;
+          if (pluralIndex !== undefined) {
             var pluralParam = params[pluralIndex];
 
             if (!pluralParam) {
@@ -139,11 +148,11 @@ Parser.prototype.parse = function (template) {
 
           msgs[key].line.push(statement.loc.start.line);
 
-          spec.forEach(function(prop, i) {
-            var param = params[i];
+          Object.keys(spec).forEach(function(prop) {
+            var param = params[spec[prop]];
 
             if (param && param.type === 'StringLiteral') {
-              msgs[key][prop] = params[i].original;
+              msgs[key][prop] = params[spec[prop]].original;
             }
           });
 
