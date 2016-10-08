@@ -6,9 +6,9 @@ It can be used stand-alone or through [xgettext-template](https://github.com/gma
 
 ### API
 
-#### new Parser(keywordspec)
+#### new Parser(keywordSpec)
 Creates a new parser.
-The `keywordspec` parameter is optional, with the default being:
+The `keywordSpec` parameter is optional, with the default being:
 ```javascript
 {
   _: {
