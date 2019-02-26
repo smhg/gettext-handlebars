@@ -1,6 +1,6 @@
 'use strict';
 
-var Handlebars = require('handlebars');
+const Handlebars = require('handlebars');
 
 function Parser (keywordSpec) {
   // make new optional
@@ -10,23 +10,23 @@ function Parser (keywordSpec) {
 
   keywordSpec = keywordSpec || Parser.keywordSpec;
 
-  Object.keys(keywordSpec).forEach(function (keyword) {
-    var positions = keywordSpec[keyword];
+  Object.keys(keywordSpec).forEach(keyword => {
+    const positions = keywordSpec[keyword];
 
     if ('msgid' in positions) {
 
     } else if (Array.isArray(positions) && positions.indexOf('msgid') >= 0) {
       // maintain backwards compatibility with `_: ['msgid']` format
-      keywordSpec[keyword] = positions.reduce(function (result, key, idx) {
+      keywordSpec[keyword] = positions.reduce((result, key, idx) => {
         result[key] = idx;
 
         return result;
       }, {});
     } else if (Array.isArray(positions) && positions.length > 0) {
       // maintain backwards compatibility with `_: [0]` format
-      var order = ['msgid', 'msgid_plural'];
+      const order = ['msgid', 'msgid_plural'];
 
-      keywordSpec[keyword] = positions.slice(0).reduce(function (result, pos, idx) {
+      keywordSpec[keyword] = positions.slice(0).reduce((result, pos, idx) => {
         result[order[idx]] = pos;
 
         return result;
@@ -34,7 +34,7 @@ function Parser (keywordSpec) {
     }
   });
 
-  Object.keys(keywordSpec).forEach(function (keyword) {
+  Object.keys(keywordSpec).forEach(keyword => {
     if (!('msgid' in keywordSpec[keyword])) {
       throw new Error('Every keyword must have a msgid key, but "' + keyword + '" doesn\'t have one');
     }
@@ -78,9 +78,8 @@ Parser.keywordSpec = {
 // Same as what Jed.js uses
 Parser.contextDelimiter = String.fromCharCode(4);
 
-Parser.messageToKey = function (msgid, msgctxt) {
-  return msgctxt ? msgctxt + Parser.contextDelimiter + msgid : msgid;
-};
+Parser.messageToKey = (msgid, msgctxt) =>
+  msgctxt ? `${msgctxt}${Parser.contextDelimiter}${msgid}` : msgid;
 
 /**
  * Given a Handlebars template string returns the list of i18n strings.
@@ -89,68 +88,69 @@ Parser.messageToKey = function (msgid, msgctxt) {
  * @return Object The list of translatable strings, the line(s) on which each appears and an optional plural form.
  */
 Parser.prototype.parse = function (template) {
-  var keywordSpec = this.keywordSpec;
-  var keywords = Object.keys(keywordSpec);
-  var tree = Handlebars.parse(template);
+  const keywordSpec = this.keywordSpec;
+  const keywords = Object.keys(keywordSpec);
+  const tree = Handlebars.parse(template);
 
-  var isMsg = function (msgs, statement) {
+  const isMsg = function (msgs, statement) {
     switch (statement.type) {
       case 'MustacheStatement':
       case 'SubExpression':
         if (keywords.indexOf(statement.path.original) !== -1) {
-          var spec = keywordSpec[statement.path.original];
-          var params = statement.params;
-          var msgidParam = params[spec.msgid];
+          const spec = keywordSpec[statement.path.original];
+          const { params } = statement;
+          const msgidParam = params[spec.msgid];
 
           if (msgidParam) { // don't extract {{gettext}} without param
-            var msgid = msgidParam.original;
-            var contextIndex = spec.msgctxt;
-            var context = null; // null context is *not* the same as empty context
+            const msgid = msgidParam.original;
+            const contextIndex = spec.msgctxt;
+            let context = null; // null context is *not* the same as empty context
 
             if (contextIndex !== undefined) {
-              var contextParam = params[contextIndex];
+              const contextParam = params[contextIndex];
 
               if (!contextParam) {
               // throw an error if there's supposed to be a context but not enough
               // parameters were passed to the handlebars helper
-                throw new Error('No context specified for msgid "' + msgid + '"');
+                throw new Error(`No context specified for msgid "${msgid}"`);
               }
 
               if (contextParam.type !== 'StringLiteral') {
-                throw new Error('Context must be a string literal for msgid "' + msgid + '"');
+                throw new Error(`Context must be a string literal for msgid "${msgid}"`);
               }
 
               context = contextParam.original;
             }
 
-            var key = Parser.messageToKey(msgid, context);
+            const key = Parser.messageToKey(msgid, context);
+
             msgs[key] = msgs[key] || { line: [] };
 
             // make sure plural forms match
-            var pluralIndex = spec.msgid_plural;
+            const pluralIndex = spec.msgid_plural;
+
             if (pluralIndex !== undefined) {
-              var pluralParam = params[pluralIndex];
+              const pluralParam = params[pluralIndex];
 
               if (!pluralParam) {
-                throw new Error('No plural specified for msgid "' + msgid + '"');
+                throw new Error(`No plural specified for msgid "${msgid}"`);
               }
 
               if (pluralParam.type !== 'StringLiteral') {
-                throw new Error('Plural must be a string literal for msgid ' + msgid);
+                throw new Error(`Plural must be a string literal for msgid "${msgid}"`);
               }
 
-              var plural = pluralParam.original;
-              var existingPlural = msgs[key].msgid_plural;
+              const plural = pluralParam.original;
+              const existingPlural = msgs[key].msgid_plural;
               if (plural && existingPlural && existingPlural !== plural) {
-                throw new Error('Incompatible plural definitions for msgid "' + msgid +
-                '" ("' + msgs[key].msgid_plural + '" and "' + plural + '")');
+                throw new Error(`Incompatible plural definitions for msgid "${msgid}" ("${msgs[key].msgid_plural}" and "${plural}")`);
               }
             }
 
             msgs[key].line.push(statement.loc.start.line);
 
-            Object.keys(spec).forEach(function (prop) {
-              var param = params[spec[prop]];
+            Object.keys(spec).forEach(prop => {
+              const param = params[spec[prop]];
 
               if (param && param.type === 'StringLiteral') {
                 msgs[key][prop] = params[spec[prop]].original;
@@ -182,9 +182,10 @@ Parser.prototype.parse = function (template) {
 
     // subexpressions as hash
     if (statement.hash) {
-      statement.hash.pairs.reduce(function (msgs, pair) {
-        return isMsg(msgs, pair.value);
-      }, msgs);
+      statement.hash.pairs.reduce(
+        (msgs, pair) => isMsg(msgs, pair.value),
+        msgs
+      );
     }
 
     return msgs;
