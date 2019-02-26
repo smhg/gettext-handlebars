@@ -14,7 +14,7 @@ function Parser (keywordSpec) {
     var positions = keywordSpec[keyword];
 
     if ('msgid' in positions) {
-      return;
+
     } else if (Array.isArray(positions) && positions.indexOf('msgid') >= 0) {
       // maintain backwards compatibility with `_: ['msgid']` format
       keywordSpec[keyword] = positions.reduce(function (result, key, idx) {
@@ -89,90 +89,90 @@ Parser.messageToKey = function (msgid, msgctxt) {
  * @return Object The list of translatable strings, the line(s) on which each appears and an optional plural form.
  */
 Parser.prototype.parse = function (template) {
-  var keywordSpec = this.keywordSpec,
-    keywords = Object.keys(keywordSpec),
-    tree = Handlebars.parse(template);
+  var keywordSpec = this.keywordSpec;
+  var keywords = Object.keys(keywordSpec);
+  var tree = Handlebars.parse(template);
 
   var isMsg = function (msgs, statement) {
     switch (statement.type) {
-    case 'MustacheStatement':
-    case 'SubExpression':
-      if (keywords.indexOf(statement.path.original) !== -1) {
-        var spec = keywordSpec[statement.path.original];
-        var params = statement.params;
-        var msgidParam = params[spec.msgid];
+      case 'MustacheStatement':
+      case 'SubExpression':
+        if (keywords.indexOf(statement.path.original) !== -1) {
+          var spec = keywordSpec[statement.path.original];
+          var params = statement.params;
+          var msgidParam = params[spec.msgid];
 
-        if (msgidParam) { // don't extract {{gettext}} without param
-          var msgid = msgidParam.original;
-          var contextIndex = spec.msgctxt;
-          var context = null; // null context is *not* the same as empty context
+          if (msgidParam) { // don't extract {{gettext}} without param
+            var msgid = msgidParam.original;
+            var contextIndex = spec.msgctxt;
+            var context = null; // null context is *not* the same as empty context
 
-          if (contextIndex !== undefined) {
-            var contextParam = params[contextIndex];
+            if (contextIndex !== undefined) {
+              var contextParam = params[contextIndex];
 
-            if (!contextParam) {
+              if (!contextParam) {
               // throw an error if there's supposed to be a context but not enough
               // parameters were passed to the handlebars helper
-              throw new Error('No context specified for msgid "' + msgid + '"');
+                throw new Error('No context specified for msgid "' + msgid + '"');
+              }
+
+              if (contextParam.type !== 'StringLiteral') {
+                throw new Error('Context must be a string literal for msgid "' + msgid + '"');
+              }
+
+              context = contextParam.original;
             }
 
-            if (contextParam.type !== 'StringLiteral') {
-              throw new Error('Context must be a string literal for msgid "' + msgid + '"');
-            }
+            var key = Parser.messageToKey(msgid, context);
+            msgs[key] = msgs[key] || { line: [] };
 
-            context = contextParam.original;
-          }
+            // make sure plural forms match
+            var pluralIndex = spec.msgid_plural;
+            if (pluralIndex !== undefined) {
+              var pluralParam = params[pluralIndex];
 
-          var key = Parser.messageToKey(msgid, context);
-          msgs[key] = msgs[key] || {line: []};
+              if (!pluralParam) {
+                throw new Error('No plural specified for msgid "' + msgid + '"');
+              }
 
-          // make sure plural forms match
-          var pluralIndex = spec.msgid_plural;
-          if (pluralIndex !== undefined) {
-            var pluralParam = params[pluralIndex];
+              if (pluralParam.type !== 'StringLiteral') {
+                throw new Error('Plural must be a string literal for msgid ' + msgid);
+              }
 
-            if (!pluralParam) {
-              throw new Error('No plural specified for msgid "' + msgid + '"');
-            }
-
-            if (pluralParam.type !== 'StringLiteral') {
-              throw new Error('Plural must be a string literal for msgid ' + msgid);
-            }
-
-            var plural = pluralParam.original;
-            var existingPlural = msgs[key].msgid_plural;
-            if (plural && existingPlural && existingPlural !== plural) {
-              throw new Error('Incompatible plural definitions for msgid "' + msgid +
+              var plural = pluralParam.original;
+              var existingPlural = msgs[key].msgid_plural;
+              if (plural && existingPlural && existingPlural !== plural) {
+                throw new Error('Incompatible plural definitions for msgid "' + msgid +
                 '" ("' + msgs[key].msgid_plural + '" and "' + plural + '")');
+              }
             }
+
+            msgs[key].line.push(statement.loc.start.line);
+
+            Object.keys(spec).forEach(function (prop) {
+              var param = params[spec[prop]];
+
+              if (param && param.type === 'StringLiteral') {
+                msgs[key][prop] = params[spec[prop]].original;
+              }
+            });
+
+            // maintain backwards compatibility with plural output
+            msgs[key].plural = msgs[key].msgid_plural;
           }
-
-          msgs[key].line.push(statement.loc.start.line);
-
-          Object.keys(spec).forEach(function(prop) {
-            var param = params[spec[prop]];
-
-            if (param && param.type === 'StringLiteral') {
-              msgs[key][prop] = params[spec[prop]].original;
-            }
-          });
-
-          // maintain backwards compatibility with plural output
-          msgs[key].plural = msgs[key].msgid_plural;
         }
-      }
 
-      break;
-    case 'BlockStatement':
-      if (statement.program) {
-        statement.program.body.reduce(isMsg, msgs);
-      }
+        break;
+      case 'BlockStatement':
+        if (statement.program) {
+          statement.program.body.reduce(isMsg, msgs);
+        }
 
-      if (statement.inverse) {
-        statement.inverse.body.reduce(isMsg, msgs);
-      }
+        if (statement.inverse) {
+          statement.inverse.body.reduce(isMsg, msgs);
+        }
 
-      break;
+        break;
     }
 
     // subexpressions as params
@@ -189,7 +189,6 @@ Parser.prototype.parse = function (template) {
 
     return msgs;
   };
-
 
   return tree.body.reduce(isMsg, {});
 };
