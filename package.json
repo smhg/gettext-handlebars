@@ -32,9 +32,9 @@
   "homepage": "https://github.com/smhg/gettext-handlebars",
   "devDependencies": {
     "eslint": "3.13.0",
-    "mocha": "3.2.0"
+    "mocha": "^3.5.3"
   },
   "dependencies": {
-    "handlebars": "4.0.13"
+    "handlebars": "^4.1.0"
   }
 }
