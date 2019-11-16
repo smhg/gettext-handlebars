@@ -39,133 +39,105 @@ describe('Parser', function () {
 
   describe('#parse()', function () {
     it('should return results', async () => {
-      try {
-        const data = await readFixture('template.hbs');
+      const data = await readFixture('template.hbs');
 
-        const result = (new Parser()).parse(data);
+      const result = (new Parser()).parse(data);
 
-        strictEqual(typeof result, 'object');
-        ok('inside block' in result);
-        ok('inside block inverse' in result);
-        strictEqual(Object.keys(result).length, 8);
-        strictEqual(result['Image description'].line.length, 2);
-      } catch (err) {
-        throw err;
-      }
+      strictEqual(typeof result, 'object');
+      ok('inside block' in result);
+      ok('inside block inverse' in result);
+      strictEqual(Object.keys(result).length, 8);
+      strictEqual(result['Image description'].line.length, 2);
     });
 
     it('should return plural results', async () => {
-      try {
-        const data = await readFixture('plural.hbs');
+      const data = await readFixture('plural.hbs');
 
-        const result = (new Parser()).parse(data);
+      const result = (new Parser()).parse(data);
 
-        strictEqual(Object.keys(result).length, 2);
-        strictEqual(result['default'].plural, 'defaults');
-      } catch (err) {
-        throw err;
-      }
+      strictEqual(Object.keys(result).length, 2);
+      strictEqual(result.default.plural, 'defaults');
     });
 
     it('should throw an error if there are mismatched plurals', async () => {
-      try {
-        const data = await readFixture('mismatched-plurals.hbs');
+      const data = await readFixture('mismatched-plurals.hbs');
 
-        throws(function () { new Parser().parse(data); }, Error);
-      } catch (err) {
-        throw err;
-      }
+      throws(function () { new Parser().parse(data); }, Error);
     });
 
     it('should recognize subexpressions', async () => {
-      try {
-        const data = await readFixture('subexpression.hbs');
+      const data = await readFixture('subexpression.hbs');
 
-        const result = (new Parser()).parse(data);
+      const result = (new Parser()).parse(data);
 
-        ok('subexpression' in result);
-        ok('%s subexpression' in result);
-        strictEqual(result['%s subexpression'].plural, '%s subexpressions');
-        ok('%s %s subexpression' in result);
-        strictEqual(result['%s %s subexpression'].plural, '%s %s subexpressions');
-        ok('second' in result);
-        ok('regular' in result);
-        ok('%s %s other' in result);
-        ok('nested %s' in result);
-        ok('dummy_hash_text' in result);
-        ok('dummy_hash_text_only' in result);
-        ok('subexpression_from_from_partial' in result);
-        strictEqual(10, Object.keys(result).length);
-      } catch (err) {
-        throw err;
-      }
+      ok('subexpression' in result);
+      ok('%s subexpression' in result);
+      strictEqual(result['%s subexpression'].plural, '%s subexpressions');
+      ok('%s %s subexpression' in result);
+      strictEqual(result['%s %s subexpression'].plural, '%s %s subexpressions');
+      ok('second' in result);
+      ok('regular' in result);
+      ok('%s %s other' in result);
+      ok('nested %s' in result);
+      ok('dummy_hash_text' in result);
+      ok('dummy_hash_text_only' in result);
+      ok('subexpression_from_from_partial' in result);
+      strictEqual(10, Object.keys(result).length);
     });
   });
 
   it('should support skipping parameters', async () => {
-    try {
-      const data = await readFixture('skip-params.hbs');
+    const data = await readFixture('skip-params.hbs');
 
-      const result = new Parser({ _: [1, 2] }).parse(data);
+    const result = new Parser({ _: [1, 2] }).parse(data);
 
-      strictEqual(result.msgid.msgid, 'msgid');
-      strictEqual(result.msgid.msgid_plural, 'plural');
-    } catch (err) {
-      throw err;
-    }
+    strictEqual(result.msgid.msgid, 'msgid');
+    strictEqual(result.msgid.msgid_plural, 'plural');
   });
 
   it('should support extracting contexts', async () => {
-    try {
-      const data = await readFixture('contexts.hbs');
+    const data = await readFixture('contexts.hbs');
 
-      const result = (new Parser({
-        pgettext: {
-          msgctxt: 0,
-          msgid: 1
-        },
-        npgettext: {
-          msgctxt: 0,
-          msgid: 1,
-          msgid_plural: 2
-        }
-      })).parse(data);
+    const result = (new Parser({
+      pgettext: {
+        msgctxt: 0,
+        msgid: 1
+      },
+      npgettext: {
+        msgctxt: 0,
+        msgid: 1,
+        msgid_plural: 2
+      }
+    })).parse(data);
 
-      let key = Parser.messageToKey('msgid', 'first context');
-      ok(key in result);
-      strictEqual(result[key].msgctxt, 'first context');
+    let key = Parser.messageToKey('msgid', 'first context');
+    ok(key in result);
+    strictEqual(result[key].msgctxt, 'first context');
 
-      key = Parser.messageToKey('msgid', 'second context');
-      ok(key in result);
-      strictEqual(result[key].msgctxt, 'second context');
+    key = Parser.messageToKey('msgid', 'second context');
+    ok(key in result);
+    strictEqual(result[key].msgctxt, 'second context');
 
-      key = Parser.messageToKey('file', 'first context');
-      ok(key in result);
-      strictEqual(result[key].msgctxt, 'first context');
-      strictEqual(result[key].msgid_plural, 'files');
-      strictEqual(result[key].plural, 'files');
+    key = Parser.messageToKey('file', 'first context');
+    ok(key in result);
+    strictEqual(result[key].msgctxt, 'first context');
+    strictEqual(result[key].msgid_plural, 'files');
+    strictEqual(result[key].plural, 'files');
 
-      key = Parser.messageToKey('file', 'second context');
-      ok(key in result);
-      strictEqual(result[key].msgctxt, 'second context');
-      strictEqual(result[key].msgid_plural, 'files');
-      strictEqual(result[key].plural, 'files');
+    key = Parser.messageToKey('file', 'second context');
+    ok(key in result);
+    strictEqual(result[key].msgctxt, 'second context');
+    strictEqual(result[key].msgid_plural, 'files');
+    strictEqual(result[key].plural, 'files');
 
-      strictEqual(4, Object.keys(result).length);
-    } catch (err) {
-      throw err;
-    }
+    strictEqual(4, Object.keys(result).length);
   });
 
   it('should support being called without `new`', async () => {
-    try {
-      const data = await readFixture('template.hbs');
+    const data = await readFixture('template.hbs');
 
-      const result = Parser().parse(data);
+    const result = Parser().parse(data);
 
-      ok('inside block' in result);
-    } catch (err) {
-      throw err;
-    }
+    ok('inside block' in result);
   });
 });
