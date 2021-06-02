@@ -140,4 +140,12 @@ describe('Parser', function () {
 
     ok('inside block' in result);
   });
+
+  it('should support inline partials', async () => {
+    const data = await readFixture('inline-partial.hbs');
+
+    const result = Parser().parse(data);
+
+    ok('inside inline content' in result);
+  });
 });

@@ -163,6 +163,8 @@ Parser.prototype.parse = function (template) {
         }
 
         break;
+      case 'PartialBlockStatement':
+      case 'DecoratorBlock':
       case 'BlockStatement':
         if (statement.program) {
           statement.program.body.reduce(isMsg, msgs);
