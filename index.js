@@ -163,7 +163,12 @@ Parser.prototype.parse = function (template) {
         }
 
         break;
+      // partial blocks and inline partials have body like other block statements
+      // partial blocks {{#> myPartial}}My Content{{/mypartial}}
+      // https://handlebarsjs.com/guide/partials.html#partial-blocks
       case 'PartialBlockStatement':
+      // inline partials {{#*inline "myPartial"}}My Content{{/inline}}
+      // https://handlebarsjs.com/guide/partials.html#inline-partials
       case 'DecoratorBlock':
       case 'BlockStatement':
         if (statement.program) {

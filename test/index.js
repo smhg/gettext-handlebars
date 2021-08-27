@@ -148,4 +148,20 @@ describe('Parser', function () {
 
     ok('inside inline content' in result);
   });
+
+  it('should support inline partials inside layout', async () => {
+    const data = await readFixture('inline-partial-layout.hbs');
+
+    const result = Parser().parse(data);
+
+    ok('inside inline content' in result);
+  });
+
+  it('should support partial blocks', async () => {
+    const data = await readFixture('partial-block.hbs');
+
+    const result = Parser().parse(data);
+
+    ok('inside partial block' in result);
+  });
 });
