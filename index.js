@@ -14,8 +14,10 @@ function Parser (keywordSpec) {
     const positions = keywordSpec[keyword];
 
     if ('msgid' in positions) {
+      return;
+    }
 
-    } else if (Array.isArray(positions) && positions.indexOf('msgid') >= 0) {
+    if (Array.isArray(positions) && positions.indexOf('msgid') >= 0) {
       // maintain backwards compatibility with `_: ['msgid']` format
       keywordSpec[keyword] = positions.reduce((result, key, idx) => {
         result[key] = idx;
