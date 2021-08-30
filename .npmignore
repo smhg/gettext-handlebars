@@ -1,6 +1,4 @@
 /test
-.travis.yml
+/.github
 .gitignore
-.jshintrc
-*.sublime-project
-*.sublime-workspace
+.eslintrc.js
