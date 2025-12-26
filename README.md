@@ -1,4 +1,4 @@
-# gettext-handlebars ![CI](https://github.com/smhg/gettext-handlebars/actions/workflows/node.js.yml/badge.svg)
+# gettext-handlebars [![ci](https://github.com/smhg/gettext-handlebars/actions/workflows/ci.yml/badge.svg)](https://github.com/smhg/gettext-handlebars/actions/workflows/ci.yml)
 
 Extract translatable strings from [Handlebars](http://handlebarsjs.com/) template strings.
 
